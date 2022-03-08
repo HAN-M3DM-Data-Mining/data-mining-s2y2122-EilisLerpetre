@@ -1,15 +1,14 @@
 ---
-title: "Assigment - kNN DIY"
+  title: "Assigment - kNN DIY"
 author:
-  - name author here - Author
-  - name reviewer here - Reviewer
+  - name author here - Mendelyn
+- name reviewer here - Eilis
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-   html_notebook:
-    toc: true
-    toc_depth: 2
+  html_notebook:
+  toc: true
+toc_depth: 2
 ---
-
 
 ```{r}
 library(tidyverse)
@@ -18,24 +17,171 @@ library(class)
 library(caret)
 ```
 
----
+#Business understanding
+```{r}
 
-Choose a suitable dataset from [this](https://github.com/HAN-M3DM-Data-Mining/assignments/tree/master/datasets) folder and train  your own kNN model. Follow all the steps from the CRISP-DM model.
+#We will be using 4 variables to observe whether an office has been used or not, However, the table provides too much information - so, irrelevant information will be excluded
+```
+
+#Data understating
+```{r}
+url <- "https://raw.githubusercontent.com/HAN-M3DM-Data-Mining/data-mining-s2y2122-Mendy1997/master/datasets/KNN-occupancy.csv"
+rawDF <- read_csv(url)
+str(rawDF)
+```
+
+#Data preparation
+```{r}
+#The variable 'data' does not contain any important information, thus will be excluded.
+```
 
 
-## Business Understanding
-text and code here
+```{r}
+cleanDF <- rawDF[-1]
+head(cleanDF)
+```
 
-## Data Understanding
-text and code here
 
-## Data Preparation
-text and code here
+```{r}
+cntDiag <- table(cleanDF$Occupancy)
+propDiag <- round(prop.table(cntDiag)*100,digits = 1)
+cntDiag
 
-## Modeling
-text and code here
+```
 
-## Evaluation and Deployment
-text and code here
 
-reviewer adds suggestions for improving the model
+```{r}
+propDiag
+```
+
+We will now change the "1" and "0" into "occupancy" and "not occupied"
+
+```{r}
+cleanDF$diagnosis <- factor(cleanDF$Occupancy,levels = c("1","0"),labels = c("Ocupancy","Not occupied")) %>% relevel("Not occupied")
+head(cleanDF,10)
+```
+
+
+```{r}
+summary(cleanDF[c("Temperature","Humidity","Light","CO2")])
+```
+
+
+```{r}
+normalize <- function(x){return((x - min(x))/(max(x)-min(x)))}
+
+testSet1 <- c(1:5)
+testSet2 <- c(1:5)*10
+
+cat("testSet1:",testSet1,"\n")
+```
+
+
+```{r}
+cat("testSet2:",testSet2,"\n")
+```
+
+```{r}
+cat("Normalized testSet1:",normalize(testSet1),"\n")
+```
+
+
+```{r}
+cat("Normlized testSet2:",normalize(testSet2))
+```
+
+```{r}
+nCols <- dim(cleanDF)[2]
+cleanDF_n <- sapply(1:nCols-1,
+                    function(x) {
+                      normalize(cleanDF[,x])
+                    }) %>% as.data.frame()
+
+summary(cleanDF_n[c("Temperature","Humidity","Light","CO2","HumidityRatio")])
+
+#Error in this section
+```
+
+#Traning the data
+```{r}
+trainDF_feat <- cleanDF_n[1:4000,7]
+testDF_feat <- cleanDF_n[4001:8143,7]
+
+#Erroor in this section
+```
+
+#Modling
+```{r}
+cleanDF_test_pred <- knn(train = as.matrix(trainDF_feat),test = as.matrix(testDF_feat),cl = as.matrix(trainDF_labels), k = 21)
+
+head(cleanDF_test_pred)
+
+#There is an error here
+```
+
+
+```{r}
+confusionMatrix(cleanDF_test_pred,testDF_labels[[1]],positive = occupany,dnn = c("Predicion","True"))
+#There is an error here
+```
+
+
+#Evaluation and Deployment
+```{r}
+#Comments
+#I recommend to give a title to your document and not R Notebook
+#Also added who authored it
+
+```
+
+
+#Code
+```{r}
+url <- "https://raw.githubusercontent.com/HAN-M3DM-Data-Mining/data-mining-s2y2122-Mendy1997/master/datasets/KNN-occupancy.csv"
+```
+
+```{r}
+rawDF <- read_csv(url)
+```
+
+```{r}
+cleanDF$Occupancy <- factor(cleanDF$Occupancy, levels = c("1", "0"), labels = c("Yes", "No")) %>% relevel("No")
+head(cleanDF, 10)
+```
+
+```{r}
+summary(cleanDF)
+```
+
+
+```{r}
+nCols <- dim(cleanDF)[2]
+cleanDF_n <- sapply(1:(nCols-1),
+                    function(x) {
+  normalize(cleanDF[,x])
+}) %>% as.data.frame()
+
+summary(cleanDF_n)
+```
+
+```{r}
+trainDF_feat <- cleanDF_n[1:5000,  ]
+testDF_feat <- cleanDF_n[5001:8143,  ]
+```
+
+
+```{r}
+trainDF_labels <- cleanDF[1:5000,  6]
+testDF_labels <- cleanDF[5001:8143,  6]
+```
+
+```{r}
+cleanDF_test_pred <- knn(train = as.matrix(trainDF_feat), test = as.matrix(testDF_feat), cl = as.matrix(trainDF_labels), k = 31)
+
+head(cleanDF_test_pred)
+```
+
+```{r}
+confusionMatrix(cleanDF_test_pred, testDF_labels[[1]], positive = NULL, dnn = c("Prediction", "True"))
+```
+
