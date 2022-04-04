@@ -1,0 +1,142 @@
+---
+title: "Assigment - kNN DIY"
+author:
+  - name author here - Mendy
+  - name reviewer here - Eilis
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+   html_notebook:
+    toc: true
+    toc_depth: 2
+---
+
+
+```{r}
+library(tidyverse)
+library(googlesheets4)
+library(class)
+library(caret)
+```
+
+---
+
+
+
+
+## Business Understanding
+We will be using 4 variables to observe whether an office has been used or not. However, the table provides too much information - so, irrelevant information will be excluded.
+
+## Data Understanding
+```{r}
+url <- "https://raw.githubusercontent.com/HAN-M3DM-Data-Mining/data-mining-s2y2122-Mendy1997/master/datasets/KNN-occupancy.csv"
+```
+
+```{r}
+rawDF <- read_csv(url)
+str(rawDF)
+```
+
+
+# Data preparation
+The variable 'date' does not contain any important information, thus will be excluded. 
+
+```{r}
+cleanDF <- rawDF[-1]
+head(cleanDF)
+```
+
+We will use this formula to see how many offices are occupied or not, (1: occupancy, 0: not occupied)
+
+```{r}
+cntDiag <- table(cleanDF$Occupancy)
+propDiag <- round(prop.table(cntDiag) * 100 , digits = 1)
+cntDiag
+```
+
+```{r}
+propDiag
+```
+
+We will now change the "1" and "0" into "occupancy" and "not occupied"
+
+```{r}
+cleanDF$Occupancy <- factor(cleanDF$Occupancy, levels = c("1", "0"), labels = c("Yes", "No")) %>% relevel("No")
+head(cleanDF, 10)
+```
+
+
+```{r}
+summary(cleanDF)
+```
+
+```{r}
+normalize <- function(x) { # Function takes in a vector
+  return ((x - min(x)) / (max(x) - min(x))) # distance of item value - minimum vector value divided by the range of all vector values
+}
+testSet1 <- c(1:5)
+testSet2 <- c(1:5) * 10
+cat("testSet1:", testSet1, "\n")
+```
+
+```{r}
+cat("testSet2:", testSet2, "\n")
+```
+
+```{r}
+cat("Normalized testSet1:", normalize(testSet1), "\n")
+```
+
+```{r}
+cat("Normalized testSet2:", normalize(testSet2))
+```
+
+```{r}
+nCols <- dim(cleanDF)[2]
+cleanDF_n <- sapply(1:(nCols-1),
+                    function(x) {
+  normalize(cleanDF[,x])
+}) %>% as.data.frame()
+
+summary(cleanDF_n)
+```
+
+# Training the data
+
+```{r}
+trainDF_feat <- cleanDF_n[1:5000,  ]
+testDF_feat <- cleanDF_n[5001:8143,  ]
+```
+
+
+```{r}
+trainDF_labels <- cleanDF[1:5000,  6]
+testDF_labels <- cleanDF[5001:8143,  6]
+```
+
+# Modeling
+
+```{r}
+cleanDF_test_pred <- knn(train = as.matrix(trainDF_feat), test = as.matrix(testDF_feat), cl = as.matrix(trainDF_labels), k = 31)
+
+head(cleanDF_test_pred)
+```
+
+# Evaluation and Deployment
+
+
+```{r}
+confusionMatrix(cleanDF_test_pred, testDF_labels[[1]], positive = NULL, dnn = c("Prediction", "True"))
+```
+
+
+
+##Notes of reviewer
+#line 63 I changed cleanDF$diagnosis to cleanDF$Occupancy to change the right column in the table
+#line 69 I changed summary(cleanDF[c("Temperature", "Humidity", "Light", "CO2")]) to summary(cleanDF) to show a better summary
+#Line 94 I changed the sapply(2) to sapply(1)
+#Line 100 I removed the c("Temperature", "Humidity", "Light", "CO2", "HumidityRatio")
+#Line 106 I changed the numbers from 4000 to 5000 and removed the 7 and the end
+#Line 107 I changed the the number 4001 to 5001 and removed the 7
+# I added lines 112 and 113 since they were missing
+# Line 119 I changed the k = 57 to k = 31
+# Line 128 I changed the positive = occupancy to positive = NULL to make the code work
